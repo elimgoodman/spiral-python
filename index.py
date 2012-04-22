@@ -31,7 +31,7 @@ class Serializer(object):
 
 @app.route('/models')
 def models():
-    models = [Model("User", [Field("foo")])]
+    models = [Model("User", [Field("foo"), Field("bar")])]
     return jsonify(resp=[m.toDict() for m in models])
 
 @app.route('/serializers')

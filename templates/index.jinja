@@ -3,7 +3,10 @@
         <script type="text/javascript" src="{{ url_for('static', filename='js/jquery.js') }}"></script>
         <script type="text/javascript" src="{{ url_for('static', filename='js/underscore.js') }}"></script>
         <script type="text/javascript" src="{{ url_for('static', filename='js/backbone.js') }}"></script>
+        <script type="text/javascript" src="{{ url_for('static', filename='js/codemirror.js') }}"></script>
+        <script type="text/javascript" src="{{ url_for('static', filename='js/cm-mode/python/python.js') }}"></script>
         <script type="text/javascript" src="{{ url_for('static', filename='js/poc.js') }}"></script>
+        <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/codemirror.css') }}" />
         <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/poc.css') }}" />
         <link href='http://fonts.googleapis.com/css?family=Ubuntu+Mono:400,700,400italic,700italic' rel='stylesheet' type='text/css'>
     </head>
@@ -23,12 +26,16 @@
                 <a class="write-link" href="#">Write</a>
             </div>
 
+            <div id="serializer-details-container" class="spiral-obj-container">
+            </div>
+
             <script type="text/html" id="model-li-tmpl">
                 <%= name %>
             </script>
 
             <script type="text/html" id="serializer-checkbox-tmpl">
-                <input type="checkbox" class="serializer" <% if(is_active) { %>checked=checked<% } %>/><%= name %>
+                <input type="checkbox" class="serializer" <% if(is_active) { %>checked=checked<% } %>/>
+                <a class="select-serializer-link" href="#"><%= name %></a>
             </script>
 
             <script type="text/html" id="model-field-tmpl">
@@ -38,6 +45,12 @@
             <script type="text/html" id="model-details-tmpl">
                 <div class="block-header"><%= name %></div>
                 <ul class="model-fields"></ul>
+            </script>
+
+            <script type="text/html" id="serializer-details-tmpl">
+                <div class="block-header"><%= name %></div>
+                <textarea class="template"><%= template %></textarea>
+                <a href="#" class="save-template-link">Done</a>
             </script>
         </div>
     </body>

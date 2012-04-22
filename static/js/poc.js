@@ -30,7 +30,9 @@ $(function(){
     });
 
     Spiral.SelectedModelBeacon = _.extend({}, Backbone.Events);
+    Spiral.SelectedSerializerBeacon = _.extend({}, Backbone.Events);
     Spiral.SelectedModel = null;
+    Spiral.SelectedSerializer = null;
 
     Spiral.AllModels = new Spiral.ModelCollection();
     Spiral.AllSerializers = new Spiral.SerializerCollection();
@@ -71,6 +73,32 @@ $(function(){
         }
     });
 
+    Spiral.SerializerDetails = Spiral.MView.extend({
+        tagName: "div",
+        className: "model-details",
+        template: _.template($('#serializer-details-tmpl').html()),
+        postRender: function() {
+            var ta = this.$(".template").get(0);
+            var mirror = CodeMirror.fromTextArea(ta, {
+                mode: 'python'
+            });
+
+            this.area = $(ta);
+            this.mirror = mirror;
+        },
+        events: {
+            'click .save-template-link': 'saveTemplate'
+        },
+        saveTemplate: function(e) {
+            e.preventDefault();
+            var val = this.mirror.getValue()
+            this.model.set({
+                template: val
+            });
+            this.area.html(val);
+        }
+    });
+
     Spiral.ModelDetailsContainer = Backbone.View.extend({
         el: $("#model-details-container"),
         initialize: function() {
@@ -81,7 +109,18 @@ $(function(){
             this.$el.html(v.render().el);
         }
     });
-    
+
+    Spiral.SerializerDetailsContainer = Backbone.View.extend({
+        el: $("#serializer-details-container"),
+        initialize: function() {
+            Spiral.SelectedSerializerBeacon.bind('change', this.render, this);
+        },
+        render: function() {
+            var v = new Spiral.SerializerDetails({model: Spiral.SelectedSerializer});
+            this.$el.html(v.render().el);
+        }
+    }); 
+
     Spiral.SerializerCheckboxView = Spiral.MView.extend({
         tagName: "li",
         className: "serializer",
@@ -96,10 +135,19 @@ $(function(){
         },
         events: {
             'click .write-link': 'write',
-            'click input.serializer': 'toggleSerializer'
+            'click input.serializer': 'toggleSerializer',
+            'click .select-serializer-link': 'selectSerializer'
         },
         toggleSerializer: function(e) {
-            $(e.target).parents("li").data('backbone-model').toggle();
+            this.getModelFromEvent(e).toggle();
+        },
+        selectSerializer: function(e) {
+            var serializer = this.getModelFromEvent(e);
+            Spiral.SelectedSerializer = serializer;
+            Spiral.SelectedSerializerBeacon.trigger('change');
+        },
+        getModelFromEvent: function(e) {
+            return $(e.target).parents("li").data('backbone-model');
         },
         write: function() {
             var params = {
@@ -157,6 +205,7 @@ $(function(){
     new Spiral.ModelList();
     new Spiral.SerializerList();
     new Spiral.ModelDetailsContainer();
+    new Spiral.SerializerDetailsContainer();
 
     Spiral.AllModels.fetch();
     Spiral.AllSerializers.fetch();
