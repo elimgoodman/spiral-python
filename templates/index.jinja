@@ -28,7 +28,7 @@
             </script>
 
             <script type="text/html" id="serializer-checkbox-tmpl">
-                <input type="checkbox" class="serializer" /><%= name %>
+                <input type="checkbox" class="serializer" <% if(is_active) { %>checked=checked<% } %>/><%= name %>
             </script>
 
             <script type="text/html" id="model-field-tmpl">

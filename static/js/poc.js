@@ -1,5 +1,11 @@
 $(function(){
     var Spiral = {};
+    
+    Spiral.Collection = Backbone.Collection.extend({
+        parse: function(data) {
+            return data.resp;
+        }
+    });
 
     Spiral.Model = Backbone.Model.extend({});
     Spiral.ModelField = Backbone.Model.extend({});
@@ -13,12 +19,12 @@ $(function(){
         }
     });
 
-    Spiral.ModelCollection = Backbone.Collection.extend({
+    Spiral.ModelCollection = Spiral.Collection.extend({
         url: "/models",
         model: Spiral.Model
     });
 
-    Spiral.SerializerCollection = Backbone.Collection.extend({
+    Spiral.SerializerCollection = Spiral.Collection.extend({
         url: "/serializers",
         model: Spiral.Serializer
     });
@@ -96,15 +102,21 @@ $(function(){
             $(e.target).parents("li").data('backbone-model').toggle();
         },
         write: function() {
-            console.log("here");
             var params = {
                 models: Spiral.AllModels.toJSON(),
                 serializers: Spiral.AllSerializers.toJSON()
             };
 
-            $.post("/write", params, function(data){
-                console.log(data);
-            }, "json");
+            $.ajax({
+                contentType: 'application/json',
+                data: JSON.stringify(params),
+                dataType: 'json',
+                success: function(data){
+                },
+                processData: false,
+                type: 'POST',
+                url: '/write'
+            });
         },
         renderSerializers: function() {
             this.serializer_list.empty();
