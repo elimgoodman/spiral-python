@@ -1,0 +1,37 @@
+;; TODO: 
+;; - export selector (both to other concepts, and to specify that it should be indexed) 
+;;  - DISREGARDING the idea of selectors for now
+;; - wildcard in a literal set
+;; - same literal syntax in requireKeys?
+;; - something like a _rootList (ie, NodeList, RuleList), or _rootListClass?
+
+;; NOTES:
+;; '~' means 'specializes'
+;; '..' allows you to set attributes on fields - want to change this
+;; '<>' is a literal set
+
+concept HTML {-
+    NodeList = list(Node);
+    AttrKey = <href|src|id|class|data-*|*>;
+    AttrVal = string;
+    Attr = dict(AttrKey, AttrVal) 
+        -> "{{key}}={{value}}";
+
+    Attrs = [Attr] 
+        -> fn self: " ".join(self);
+
+    Tag = <a|script|div|span|img>;
+
+    Node = string
+        | (tag:Tag, attrs:Attrs, innerNodes:NodeList) 
+            -> "<{{tag}} {{attrs}}>{{innerNodes}}</{{tag}}>";
+
+    ;; Specializations
+    Node~Link = (tag:<a>, attrs..requireKeys(['href']));
+    Node~Picture = (tag:<img>, attrs..requireKeys(['src'], innerNodes=[]);
+-}
+
+concept CSS {-
+    RuleList = list(Rule);
+    Rule = (selector:Selector, style:Style);
+-}
