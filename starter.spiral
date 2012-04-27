@@ -11,19 +11,19 @@
 ;; '<>' is a literal set
 
 concept HTML {-
-    NodeList = list(Node);
-    AttrKey = <href|src|id|class|data-*|*>;
+    NodeList = list<Node>;
+    AttrKey = "href|src|id|class|data-*|*";
     AttrVal = string;
-    Attr = dict(AttrKey, AttrVal);
-    ;;    -> "{{key}}={{value}}";
+    Attr = (key:AttrKey, val:AttrVal)
+        -> "%s=%s" % (self.key, self.val);
 
-    ;;Attrs = list(Attr) 
+    ;;Attrs = list<Attr>;
     ;;    -> lambda self: " ".join(self);
 
-    ;;Tag = <a|script|div|span|img>;
+    ;;Tag = "a|script|div|span|img";
 
     ;;Node = string
-    ;;    | (tag:Tag, attrs:Attrs, innerNodes:NodeList) 
+    ;;    | tuple(tag:Tag, attrs:Attrs, innerNodes:NodeList) 
     ;;        -> "<{{tag}} {{attrs}}>{{innerNodes}}</{{tag}}>";
 
     ;; Specializations
