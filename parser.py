@@ -18,9 +18,35 @@ def get_concepts(c):
 def get_statements(c):
     return map(lambda s: s.strip(), re.findall(r'([^;]+);', c))
 
+def parse_definition(d):
+    d = d.strip()
+
+    what = None
+    r_primitive = r'^([a-z]+)'
+    r_primitive_param = r'^[a-z]+\((.+)\)'
+
+    primitive = re.findall(r_primitive, d)
+    if primitive:
+        what = {
+            'type': 'Primitive',
+            'value': primitive[0]
+        }
+        primitive_param = re.findall(r_primitive_param, d)
+        if primitive_param:
+            what['params'] = primitive_param[0].split(',')
+
+    return what
+
 content = strip_comments(content)
 content = strip_newlines(content)
 concepts = get_concepts(content)
 for name, inner in concepts:
     statements = get_statements(inner)
-    print statements
+    for statement in statements:
+        statement = strip_newlines(statement);
+        matched = re.findall(r'([A-Z]\w+\s*)=(.+)', statement)[0]
+        (identifier, definition) = matched
+
+        def_parsed = parse_definition(definition)
+        print def_parsed
+

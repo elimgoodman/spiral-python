@@ -14,24 +14,24 @@ concept HTML {-
     NodeList = list(Node);
     AttrKey = <href|src|id|class|data-*|*>;
     AttrVal = string;
-    Attr = dict(AttrKey, AttrVal) 
-        -> "{{key}}={{value}}";
+    Attr = dict(AttrKey, AttrVal);
+    ;;    -> "{{key}}={{value}}";
 
-    Attrs = [Attr] 
-        -> fn self: " ".join(self);
+    ;;Attrs = list(Attr) 
+    ;;    -> lambda self: " ".join(self);
 
-    Tag = <a|script|div|span|img>;
+    ;;Tag = <a|script|div|span|img>;
 
-    Node = string
-        | (tag:Tag, attrs:Attrs, innerNodes:NodeList) 
-            -> "<{{tag}} {{attrs}}>{{innerNodes}}</{{tag}}>";
+    ;;Node = string
+    ;;    | (tag:Tag, attrs:Attrs, innerNodes:NodeList) 
+    ;;        -> "<{{tag}} {{attrs}}>{{innerNodes}}</{{tag}}>";
 
     ;; Specializations
-    Node~Link = (tag:<a>, attrs..requireKeys(['href']));
-    Node~Picture = (tag:<img>, attrs..requireKeys(['src'], innerNodes=[]);
+    ;; Node~Link = (tag:<a>, attrs..requireKeys(['href']));
+    ;; Node~Picture = (tag:<img>, attrs..requireKeys(['src'], innerNodes:list())
 -}
 
 concept CSS {-
-    RuleList = list(Rule);
-    Rule = (selector:Selector, style:Style);
+    ;;RuleList = list(Rule);
+    ;;Rule = (selector:Selector, style:Style);
 -}
