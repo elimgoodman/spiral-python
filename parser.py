@@ -1,12 +1,6 @@
 from collections import defaultdict
 import re
 
-path = "starter.spiral"
-
-f = open(path, "r")
-
-content = f.read()
-
 def strip_comments(c):
     return re.sub(r'^\s*;.+\n', '', c, flags=re.MULTILINE)
 
@@ -75,19 +69,29 @@ def parse_definition(d):
 
     return what
 
-concept_dict = defaultdict(dict)
+def get_concepts_from_text(content):
+    concepts_parsed = []
 
-content = strip_comments(content)
-content = strip_newlines(content)
-concepts = get_concepts(content)
-for name, inner in concepts:
-    statements = get_statements(inner)
-    for statement in statements:
-        statement = strip_newlines(statement);
-        matched = re.findall(r'([A-Z]\w+\s*)=(.+)', statement)[0]
-        (identifier, definition) = matched
+    content = strip_comments(content)
+    content = strip_newlines(content)
+    concepts = get_concepts(content)
+    for name, inner in concepts:
+        statements = get_statements(inner)
+        concept_dict = {}
+        concept_dict['name'] = name
+        concept_dict['definitions'] = {}
+        concept_dict['attrs'] = {}
 
-        def_parsed = parse_definition(definition)
-        concept_dict[name][identifier.strip()] = def_parsed
-
-print concept_dict
+        for statement in statements:
+            statement = strip_newlines(statement);
+            def_tuple = re.findall(r'([A-Z]\w+\s*)=(.+)', statement)
+            attr_tuple = re.findall(r'@(.+?)\s*=(.+)', statement)
+            if def_tuple:
+                (identifier, definition) = def_tuple[0]
+                def_parsed = parse_definition(definition)
+                concept_dict['definitions'][identifier.strip()] = def_parsed
+            elif attr_tuple:
+                (attr, attr_val) = attr_tuple[0]
+                concept_dict['attrs'][attr.strip()] = attr_val.strip()
+        concepts_parsed.append(concept_dict)
+    return concepts_parsed

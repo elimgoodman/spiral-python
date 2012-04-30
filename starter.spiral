@@ -11,20 +11,20 @@
 ;; '<>' is a literal set
 
 concept HTML {-
-    NodeList = list<Node>;
+    @root_list_type = Node;
+
     AttrKey = "href|src|id|class|data-*|*";
     AttrVal = string;
     Attr = (key:AttrKey, val:AttrVal)
         -> "%s=%s" % (self.key, self.val);
 
-    ;;Attrs = list<Attr>;
-    ;;    -> lambda self: " ".join(self);
+    Attrs = list<Attr>
+        -> " ".join(self);
 
-    ;;Tag = "a|script|div|span|img";
+    Tag = "a|script|div|span|img";
 
-    ;;Node = string
-    ;;    | tuple(tag:Tag, attrs:Attrs, innerNodes:NodeList) 
-    ;;        -> "<{{tag}} {{attrs}}>{{innerNodes}}</{{tag}}>";
+    Node = (tag:Tag, attrs:Attrs, innerNodes:NodeList, text:string) 
+            -> "<%s %s>%s %s</%s>" % (self.tag, self.attrs, self.innerNodes, self.text, self.tag);
 
     ;; Specializations
     ;; Node~Link = (tag:<a>, attrs..requireKeys(['href']));
