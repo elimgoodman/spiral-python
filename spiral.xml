@@ -1,0 +1,42 @@
+<concept name="html" root_list_type="Node">
+    <definition name="AttrKey">
+        <accepts type="literal">href</accepts>
+        <accepts type="literal">src</accepts>
+        <accepts type="literal">id</accepts>
+        <accepts type="literal">class</accepts>
+        <accepts type="literal">data-*</accepts>
+        <accepts type="wildcard" />
+    </definition>
+    <alias type="string" name="AttrVal" />
+    <definition name="Attr">
+        <accepts type="tuple">
+            <field name="key" type="AttrKey" />
+            <field name="val" key="AttrVal" />
+        </accepts>
+        <serializer>
+            <![CDATA["%s=%s" % (self.key, self.val)]]>
+        </serializer>
+    </definition>
+    <definition name="Attrs">
+        <accepts type="list" of="Attr" />
+        <serializer>
+            <![CDATA[" ".join(self)]]>
+        </serializer>
+    </definition>
+    <definition name="Tag">
+        <accepts type="literal">a</accepts>
+        <accepts type="literal">script</accepts>
+        <accepts type="literal">img</accepts>
+    </definition>
+    <definition name="Node">
+        <accepts type="tuple">
+            <field name="tag" type="Tag" />
+            <field name="attrs" type="Attrs" />
+            <field name="innerNodes" type="NodeList" />
+            <field name="text" type="string" />
+        </accepts>
+        <serializer>
+            <![CDATA["<%s %s>%s %s</%s>" % (self.tag, self.attrs, self.innerNodes, self.text, self.tag)]]>
+        </serializer>
+    </definition>
+</concept>

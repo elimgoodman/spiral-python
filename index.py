@@ -1,16 +1,16 @@
 from flask import Flask, render_template, jsonify, request
 from pystache import Renderer
-
+import json
 import parser
 
 app = Flask(__name__)
 
 @app.route('/concepts')
 def concepts():
-    path = "starter.spiral"
+    path = "starter.json"
     f = open(path, "r")
     content = f.read()
-    concepts = parser.get_concepts_from_text(content)
+    concepts = json.loads(content)
     return jsonify(resp=concepts)
 
 @app.route('/')
