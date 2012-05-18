@@ -13,6 +13,17 @@ def concepts():
     concepts = json.loads(content)
     return jsonify(resp=concepts)
 
+@app.route('/primitives')
+def primitives():
+    primitives = [
+        "string",
+        "list"
+    ]
+    
+    p_dicts = map(lambda p: {'name':p, 'is_primitive': True}, primitives)
+
+    return jsonify(resp=p_dicts)
+
 @app.route('/')
 def index():
     return render_template('editor.jinja')

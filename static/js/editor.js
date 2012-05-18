@@ -40,11 +40,23 @@ $(function(){
 
     Spiral.Type = Backbone.Model.extend({
         isPrimitive: function() {
-            return this.get("type") == "Primitive";
+            //TODO: this
+            return false;
         }
     });
+
     Spiral.Node = Backbone.Model.extend({});
-    Spiral.Field = Backbone.Model.extend({});
+    Spiral.Field = Backbone.Model.extend({
+        getType: function() {
+            var type_name = this.get("field_type");
+            return Spiral.CurrentConcept.getTypeByName(type_name);
+        }
+    });
+    
+    Spiral.PrimitiveCollection = Spiral.Collection.extend({
+        url: "/primitives",
+        model: Spiral.Type
+    });
 
     Spiral.ConceptCollection = Spiral.Collection.extend({
         url: "/concepts",
@@ -65,7 +77,7 @@ $(function(){
             return this.getTypeByName(root_type);
         },
         getTypeByName: function(name) {
-            var types = this.getCurrentTypes();
+            var types = _.union(this.getCurrentTypes(), Spiral.Primitives.models);
             return _.find(types, function(t) {
                 return t.get('name') == name; 
             });
@@ -79,18 +91,27 @@ $(function(){
     Spiral.AllNodes = new Spiral.NodeList();
 
     Spiral.AllConcepts = new Spiral.ConceptCollection();
+    Spiral.Primitives = new Spiral.PrimitiveCollection();
 
     Spiral.FieldView = Spiral.MView.extend({
         tagName: "li",
         className: "field",
         template: _.template($('#field-tmpl').html()),
-        getTemplateContext: function() {
+        postRender: function() {
             var type_name = this.model.get('field_type');
-            var field_type = Spiral.CurrentConcept.getTypeByName(type_name);
-            return _.extend(this.model.toJSON(), {
-                field_type: field_type
-            });
+            var field_type = this.model.getType();
+
+            var v = new Spiral.TypeInputView({model:field_type});
+            this.$(".type-input-container").html(v.render().el);
         }
+    });
+
+    Spiral.TypeInputView = Spiral.MView.extend({
+        tagName: "div",
+        className: function() {
+            return "type-input ";
+        },
+        template: _.template($('#type-input-tmpl').html())
     });
 
     Spiral.NodeView = Spiral.MView.extend({
@@ -154,6 +175,7 @@ $(function(){
     });
 
     Spiral.AllConcepts.fetch();
+    Spiral.Primitives.fetch();
 
     new Spiral.Editor;
     new Spiral.NodeListView;
