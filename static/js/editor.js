@@ -39,13 +39,55 @@ $(function(){
     });
 
     Spiral.Type = Backbone.Model.extend({
+        getInputType: function() {
+            if(this.get('literals')) {
+                return 'literal';
+            } else if(this.get('fields')) {
+                return 'multi';
+            } else if(this.get('type_alias')) {
+                return 'alias';
+            } else if(this.isPrimitive()) {
+                return 'primitive';
+            }
+        },
+
         isPrimitive: function() {
-            //TODO: this
-            return false;
+            return this.get('is_primitive');
         }
     });
 
     Spiral.Node = Backbone.Model.extend({});
+    Spiral.Cursor = Backbone.Model.extend({
+        defaults: {
+            'current_node': null
+        },
+        moveDown: function() {
+            var current_node = this.get('current_node');
+            var new_node;
+
+            if(current_node == null) {
+                new_node = 0;
+            } else {
+                new_node = current_node + 1;
+            }
+
+            this.set({current_node: new_node});
+        },
+        moveUp: function() {
+            var current_node = this.get('current_node');
+            var new_node;
+
+            if(current_node == null) {
+                new_node = 0;
+            } else {
+                new_node = current_node - 1;
+            }
+
+            this.set({current_node: new_node});
+        }
+    });
+    Spiral.TheCursor = new Spiral.Cursor;
+
     Spiral.Field = Backbone.Model.extend({
         getType: function() {
             var type_name = this.get("field_type");
@@ -108,10 +150,12 @@ $(function(){
 
     Spiral.TypeInputView = Spiral.MView.extend({
         tagName: "div",
-        className: function() {
-            return "type-input ";
-        },
-        template: _.template($('#type-input-tmpl').html())
+        className: "type-input",
+        template: _.template($('#type-input-tmpl').html()),
+        postRender: function() {
+            var input_type = this.model.getInputType();
+            this.$el.addClass(input_type);
+        }
     });
 
     Spiral.NodeView = Spiral.MView.extend({
@@ -130,11 +174,22 @@ $(function(){
         }
     });
     
+    Spiral.CursorView = Backbone.View.extend({
+        el: $("#cursor"),
+        initialize: function() {
+            Spiral.TheCursor.bind('change', this.render, this);
+        },
+        render: function() {
+            console.log(Spiral.TheCursor.get('current_node'));
+        }
+    });
     Spiral.Editor = Backbone.View.extend({
         el: $("#editor"),
         initialize: function() {
             var keymap = {
-                'N': this.addNode
+                'N': this.addNode,
+                'J': this.cursorDown,
+                'K': this.cursorUp,
             };
 
             $('body').keyup(function(e){
@@ -151,6 +206,12 @@ $(function(){
                 type: type
             });
             Spiral.AllNodes.push(node);
+        },
+        cursorDown: function() {
+            Spiral.TheCursor.moveDown();
+        },
+        cursorUp: function() {
+            Spiral.TheCursor.moveUp();
         }
     });
 
@@ -179,5 +240,6 @@ $(function(){
 
     new Spiral.Editor;
     new Spiral.NodeListView;
+    new Spiral.CursorView;
     window.Spiral = Spiral;
 });
