@@ -3,3 +3,13 @@
     width: 10px;
     height: 20px;
 }
+
+.node {
+    border: 1px solid #eee;
+    padding: 9px;
+    margin-bottom: 9px;
+}
+
+.node.selected {
+    border: 1px solid #333;
+}

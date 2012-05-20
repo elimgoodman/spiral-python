@@ -61,30 +61,58 @@ $(function(){
         defaults: {
             'current_node': null
         },
-        moveDown: function() {
-            var current_node = this.get('current_node');
-            var new_node;
-
-            if(current_node == null) {
-                new_node = 0;
-            } else {
-                new_node = current_node + 1;
+        setCurrentNode: function (node) {
+            var old = this.getCurrentNode();
+            if(old) {
+                old.set({selected: false});
             }
+            node.set({selected: true});
+            this.set({current_node: node});
+        },
+        getCurrentNode: function() {
+            return this.get("current_node");
+        },
+        getCurrentNodeIndex: function() {
+            var current = this.getCurrentNode();
+            var i = 0, index;
 
-            this.set({current_node: new_node});
+            Spiral.AllNodes.each(function(node){
+                if(node.cid == current.cid) {
+                    index = i;
+                }
+
+                i++;
+            });
+
+            return index;
+        },
+        switchCurrentNode: function(index_xform) {
+            var current_index = this.getCurrentNodeIndex();
+            var new_index = index_xform(current_index);
+
+            if(new_index) {
+                var node = Spiral.AllNodes.at(new_index);
+                this.setCurrentNode(node);
+            }
+        },
+        moveDown: function() {
+            this.switchCurrentNode(function(index){
+                if(index != null && index < (Spiral.AllNodes.length - 1)) {
+                    return index + 1;
+                } else {
+                    return null;
+                }
+            });
         },
         moveUp: function() {
-            var current_node = this.get('current_node');
-            var new_node;
-
-            if(current_node == null) {
-                new_node = 0;
-            } else {
-                new_node = current_node - 1;
-            }
-
-            this.set({current_node: new_node});
-        }
+            this.switchCurrentNode(function(index){
+                if(index != null) {
+                    return index - 1;
+                } else {
+                    return null;
+                }
+            });
+        },
     });
     Spiral.TheCursor = new Spiral.Cursor;
 
@@ -163,6 +191,10 @@ $(function(){
         className: "node",
         template: _.template($('#node-tmpl').html()),
         postRender: function() {
+            if(this.model.get('selected')) {
+                this.$el.addClass('selected');
+            }
+
             var fields = this.$(".fields");
             var type = this.model.get('type');
 
@@ -173,16 +205,7 @@ $(function(){
             });
         }
     });
-    
-    Spiral.CursorView = Backbone.View.extend({
-        el: $("#cursor"),
-        initialize: function() {
-            Spiral.TheCursor.bind('change', this.render, this);
-        },
-        render: function() {
-            console.log(Spiral.TheCursor.get('current_node'));
-        }
-    });
+
     Spiral.Editor = Backbone.View.extend({
         el: $("#editor"),
         initialize: function() {
@@ -206,6 +229,8 @@ $(function(){
                 type: type
             });
             Spiral.AllNodes.push(node);
+
+            Spiral.TheCursor.setCurrentNode(node);
         },
         cursorDown: function() {
             Spiral.TheCursor.moveDown();
@@ -240,6 +265,5 @@ $(function(){
 
     new Spiral.Editor;
     new Spiral.NodeListView;
-    new Spiral.CursorView;
     window.Spiral = Spiral;
 });
