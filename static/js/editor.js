@@ -1,5 +1,9 @@
 $(function(){
     var Spiral = {};
+
+    Spiral.Modes = {};
+    Spiral.Modes.NODE = 'node';
+    Spiral.Modes.FIELD = 'field';
     
     Spiral.Collection = Backbone.Collection.extend({
         parse: function(data) {
@@ -17,6 +21,9 @@ $(function(){
         postRender: $.noop,
         getTemplateContext: function() {
             return this.model.toJSON();
+        },
+        initialize: function() {
+            this.model.bind('change', this.render, this);
         }
     });
 
@@ -39,6 +46,13 @@ $(function(){
     });
 
     Spiral.Type = Backbone.Model.extend({
+        initialize: function() {
+            this.set({
+                fields: _.map(this.get('fields'), function(f){
+                    return new Spiral.Field(f);
+                })
+            });
+        },
         getInputType: function() {
             if(this.get('literals')) {
                 return 'literal';
@@ -59,7 +73,8 @@ $(function(){
     Spiral.Node = Backbone.Model.extend({});
     Spiral.Cursor = Backbone.Model.extend({
         defaults: {
-            'current_node': null
+            'current_node': null,
+            'current_field': null
         },
         setCurrentNode: function (node) {
             var old = this.getCurrentNode();
@@ -69,8 +84,21 @@ $(function(){
             node.set({selected: true});
             this.set({current_node: node});
         },
+        setCurrentField: function (field) {
+            var old = this.getCurrentField();
+            if(old) {
+                old.set({selected: false});
+            }
+            if(field) {
+                field.set({selected: true});
+            }
+            this.set({current_field: field});
+        },
         getCurrentNode: function() {
             return this.get("current_node");
+        },
+        getCurrentField: function() {
+            return this.get("current_field");
         },
         getCurrentNodeIndex: function() {
             var current = this.getCurrentNode();
@@ -90,7 +118,7 @@ $(function(){
             var current_index = this.getCurrentNodeIndex();
             var new_index = index_xform(current_index);
 
-            if(new_index) {
+            if(new_index != null) {
                 var node = Spiral.AllNodes.at(new_index);
                 this.setCurrentNode(node);
             }
@@ -106,12 +134,22 @@ $(function(){
         },
         moveUp: function() {
             this.switchCurrentNode(function(index){
-                if(index != null) {
+                if(index != null && index > 0) {
                     return index - 1;
                 } else {
                     return null;
                 }
             });
+        },
+        editCurrentNode: function() {
+            var node = this.getCurrentNode();
+            var type = node.get('type');
+            var fields = type.get('fields');
+
+            this.setCurrentField(fields[0]);
+        },
+        stopEditingCurrentNode: function() {
+            this.setCurrentField(null);
         },
     });
     Spiral.TheCursor = new Spiral.Cursor;
@@ -157,6 +195,17 @@ $(function(){
         }
     }, Backbone.Events);
 
+    Spiral.CurrentMode = _.extend({
+        m: Spiral.Modes.NODE,
+        set: function(m){
+            this.m = m;
+            this.trigger('change');
+        },
+        get: function(){
+            return this.m;
+        },
+    }, Backbone.Events);
+
     Spiral.NodeList = Spiral.Collection.extend({});
     Spiral.AllNodes = new Spiral.NodeList();
 
@@ -168,6 +217,10 @@ $(function(){
         className: "field",
         template: _.template($('#field-tmpl').html()),
         postRender: function() {
+            if (this.model.get('selected')) {
+                this.$el.addClass('selected');
+            }
+
             var type_name = this.model.get('field_type');
             var field_type = this.model.getType();
 
@@ -199,8 +252,7 @@ $(function(){
             var type = this.model.get('type');
 
             _.each(type.get('fields'), function(f){
-                var field = new Spiral.Field(f);
-                var view = new Spiral.FieldView({model: field});
+                var view = new Spiral.FieldView({model: f});
                 fields.append(view.render().el);
             });
         }
@@ -209,18 +261,27 @@ $(function(){
     Spiral.Editor = Backbone.View.extend({
         el: $("#editor"),
         initialize: function() {
-            var keymap = {
+            var keymap = {};
+            keymap[Spiral.Modes.NODE] = {
                 'N': this.addNode,
                 'J': this.cursorDown,
                 'K': this.cursorUp,
+                'E': this.editNode
+            };
+            keymap[Spiral.Modes.FIELD] = {
+                'X': this.exitFieldMode
             };
 
             $('body').keyup(function(e){
                 var char = String.fromCharCode(e.keyCode);
-                var method = keymap[char];
+                
+                var mode = Spiral.CurrentMode.get();
+                var method = keymap[mode][char];
                 if(method) {
                     method();
                 }
+
+                e.preventDefault();
             });
         },
         addNode: function() {
@@ -229,6 +290,7 @@ $(function(){
                 type: type
             });
             Spiral.AllNodes.push(node);
+            Spiral.AllNodes.trigger('added');
 
             Spiral.TheCursor.setCurrentNode(node);
         },
@@ -237,13 +299,21 @@ $(function(){
         },
         cursorUp: function() {
             Spiral.TheCursor.moveUp();
+        },
+        editNode: function() {
+            Spiral.CurrentMode.set(Spiral.Modes.FIELD);
+            Spiral.TheCursor.editCurrentNode();
+        },
+        exitFieldMode: function() {
+            Spiral.CurrentMode.set(Spiral.Modes.NODE);
+            Spiral.TheCursor.stopEditingCurrentNode();
         }
     });
 
     Spiral.NodeListView = Backbone.View.extend({
         el: $("#node-list"),
         initialize: function() {
-            Spiral.AllNodes.bind('all', this.render, this);
+            Spiral.AllNodes.bind('added', this.render, this);
         },
         render: function() {
             var self = this;
@@ -253,6 +323,17 @@ $(function(){
                 var view = new Spiral.NodeView({model: n});
                 self.$el.append(view.render().el);
             });
+        }
+    });
+
+    Spiral.ModeDisplayView = Backbone.View.extend({
+        el: $("#mode-display"),
+        initialize: function() {
+            Spiral.CurrentMode.bind('change', this.render, this);
+            this.render();
+        },
+        render: function() {
+            this.$el.html(Spiral.CurrentMode.get());
         }
     });
     
@@ -265,5 +346,6 @@ $(function(){
 
     new Spiral.Editor;
     new Spiral.NodeListView;
+    new Spiral.ModeDisplayView;
     window.Spiral = Spiral;
 });

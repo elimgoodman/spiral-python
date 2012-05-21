@@ -1,15 +1,29 @@
+body {
+    margin: 0;
+    padding: 0;
+}
+
 #cursor {
     background: black;
     width: 10px;
     height: 20px;
 }
 
-.node {
+.node, .field {
     border: 1px solid #eee;
     padding: 9px;
     margin-bottom: 9px;
 }
 
-.node.selected {
+.node.selected, .field.selected {
     border: 1px solid #333;
+}
+
+#status-bar {
+    width: 100%;
+    position: fixed;
+    bottom: 0;
+    padding: 12px;
+    border-top: 1px solid #ccc;
+    background: white;
 }
