@@ -1,5 +1,5 @@
 $(function(){
-    var Spiral = {};
+    var Spiral = window.Spiral || {};
 
     Spiral.Modes = {};
     Spiral.Modes.NODE = 'node';
@@ -24,6 +24,13 @@ $(function(){
         },
         initialize: function() {
             this.model.bind('change', this.render, this);
+        },
+        toggleSelected: function() {
+            if(this.model.get('selected')) {
+                this.$el.addClass('selected');
+            } else {
+                this.$el.removeClass('selected');
+            }
         }
     });
 
@@ -217,9 +224,7 @@ $(function(){
         className: "field",
         template: _.template($('#field-tmpl').html()),
         postRender: function() {
-            if (this.model.get('selected')) {
-                this.$el.addClass('selected');
-            }
+            this.toggleSelected();
 
             var type_name = this.model.get('field_type');
             var field_type = this.model.getType();
@@ -244,9 +249,7 @@ $(function(){
         className: "node",
         template: _.template($('#node-tmpl').html()),
         postRender: function() {
-            if(this.model.get('selected')) {
-                this.$el.addClass('selected');
-            }
+            this.toggleSelected();
 
             var fields = this.$(".fields");
             var type = this.model.get('type');
@@ -262,21 +265,23 @@ $(function(){
         el: $("#editor"),
         initialize: function() {
             var keymap = {};
-            keymap[Spiral.Modes.NODE] = {
-                'N': this.addNode,
-                'J': this.cursorDown,
-                'K': this.cursorUp,
-                'E': this.editNode
-            };
-            keymap[Spiral.Modes.FIELD] = {
-                'X': this.exitFieldMode
-            };
+
+            var node_keys = {};
+
+            node_keys[Spiral.Keys.KEY_N] = this.addNode;
+            node_keys[Spiral.Keys.KEY_J] = this.cursorDown;
+            node_keys[Spiral.Keys.KEY_K] = this.cursorUp;
+            node_keys[Spiral.Keys.KEY_E] = this.editNode;
+
+            keymap[Spiral.Modes.NODE] = node_keys;
+
+            var field_keys = {};
+            field_keys[Spiral.Keys.ESCAPE] = this.exitFieldMode;
+            keymap[Spiral.Modes.FIELD] = field_keys;
 
             $('body').keyup(function(e){
-                var char = String.fromCharCode(e.keyCode);
-                
                 var mode = Spiral.CurrentMode.get();
-                var method = keymap[mode][char];
+                var method = keymap[mode][e.which];
                 if(method) {
                     method();
                 }
