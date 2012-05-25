@@ -5,7 +5,6 @@
       },
       "definitions":{
          "Attr":{
-            "serializer":"\"%s=%s\" % (self.key, self.val)",
             "fields":[
                {
                   "field_name":"key",
@@ -31,19 +30,12 @@
             "type_alias":"string"
          },
          "NodeList":{
-            "type_alias":"list",
-            "type_params":[
-                "Node"
-            ]
+            "list_of":"Node"
          },
          "Attrs":{
-            "type_params":[
-               "Attr"
-            ],
-            "type_alias":"list"
+            "list_of":"Attr"
          },
          "Node":{
-            "serializer":"\"<%s %s>%s %s</%s>\" % (self.tag, self.attrs, self.innerNodes, self.text, self.tag)",
             "fields":[
                {
                   "field_name":"tag",

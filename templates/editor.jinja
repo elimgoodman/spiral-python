@@ -1,6 +1,8 @@
 <html>
     <head>
         <script type="text/javascript" src="{{ url_for('static', filename='js/jquery.js') }}"></script>
+        <script type="text/javascript" src="{{ url_for('static', filename='js/jquery-ui.js') }}"></script>
+        <script type="text/javascript" src="{{ url_for('static', filename='js/typeahead.js') }}"></script>
         <script type="text/javascript" src="{{ url_for('static', filename='js/underscore.js') }}"></script>
         <script type="text/javascript" src="{{ url_for('static', filename='js/backbone.js') }}"></script>
         <script type="text/javascript" src="{{ url_for('static', filename='js/keys.js') }}"></script>
@@ -28,7 +30,7 @@
     </script>
 
     <script type="text/html" id="type-input-tmpl">
-        input
+        <input class="type-input-box" />
     </script>
 </html>
 
