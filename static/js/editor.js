@@ -2,7 +2,7 @@ $(function(){
     var Spiral = window.Spiral || {};
 
     Spiral.Modes = {};
-    Spiral.Modes.NODE = 'node';
+    Spiral.Modes.LIST = 'list';
     Spiral.Modes.FIELD = 'field';
 
     Spiral.FieldTypes = {};
@@ -11,7 +11,6 @@ $(function(){
     Spiral.FieldTypes.ALIAS = 'alias';
     Spiral.FieldTypes.PRIMITIVE = 'primitive';
     Spiral.FieldTypes.LIST = 'list';
-    
     
     Spiral.Collection = Backbone.Collection.extend({
         parse: function(data) {
@@ -88,133 +87,6 @@ $(function(){
     });
 
     Spiral.Node = Backbone.Model.extend({});
-    Spiral.Cursor = Backbone.Model.extend({
-        defaults: {
-            'current_node': null,
-            'current_field': null
-        },
-        setCurrentNode: function (node) {
-            var old = this.getCurrentNode();
-            if(old) {
-                old.set({selected: false});
-            }
-            node.set({selected: true});
-            this.set({current_node: node});
-        },
-        setCurrentField: function (field) {
-            var old = this.getCurrentField();
-            if(old) {
-                old.set({selected: false});
-            }
-            if(field) {
-                field.set({selected: true});
-            }
-            this.set({current_field: field});
-        },
-        getCurrentNode: function() {
-            return this.get("current_node");
-        },
-        getCurrentField: function() {
-            return this.get("current_field");
-        },
-        getCurrentFieldIndex: function() {
-            var current = this.getCurrentField();
-            var i = 0, index;
-
-            _.each(this.getCurrentNodeFields(), function(field){
-                if(field.cid == current.cid) {
-                    index = i;
-                }
-
-                i++;
-            });
-
-            return index;
-        },
-        getCurrentNodeIndex: function() {
-            var current = this.getCurrentNode();
-            var i = 0, index;
-
-            Spiral.AllNodes.each(function(node){
-                if(node.cid == current.cid) {
-                    index = i;
-                }
-
-                i++;
-            });
-
-            return index;
-        },
-        switchCurrentNode: function(index_xform) {
-            var current_index = this.getCurrentNodeIndex();
-            var new_index = index_xform(current_index);
-
-            if(new_index != null) {
-                var node = Spiral.AllNodes.at(new_index);
-                this.setCurrentNode(node);
-            }
-        },
-        nextNode: function() {
-            this.switchCurrentNode(function(index){
-                if(index != null && index < (Spiral.AllNodes.length - 1)) {
-                    return index + 1;
-                } else {
-                    return null;
-                }
-            });
-        },
-        previousNode: function() {
-            this.switchCurrentNode(function(index){
-                if(index != null && index > 0) {
-                    return index - 1;
-                } else {
-                    return null;
-                }
-            });
-        },
-        getCurrentNodeFields: function() {
-            var node = this.getCurrentNode();
-            var type = node.get('type');
-            return type.get('fields');
-        },
-        editCurrentNode: function() {
-            var fields = this.getCurrentNodeFields();
-
-            this.setCurrentField(fields[0]);
-        },
-        stopEditingCurrentNode: function() {
-            this.setCurrentField(null);
-        },
-        nextField: function() {
-            this.switchCurrentField(function(index, num_fields){
-                if(index != null && index < (num_fields - 1)) {
-                    return index + 1;
-                } else {
-                    return null;
-                }
-            });
-        },
-        previousField: function() {
-            this.switchCurrentField(function(index){
-                if(index != null && index > 0) {
-                    return index - 1;
-                } else {
-                    return null;
-                }
-            });
-        },
-        switchCurrentField: function(index_xform) {
-            var fields = this.getCurrentNodeFields();
-
-            var current_index = this.getCurrentFieldIndex();
-            var new_index = index_xform(current_index, fields.length);
-
-            if(new_index != null) {
-                this.setCurrentField(fields[new_index]);
-            }
-        },
-    });
-    Spiral.TheCursor = new Spiral.Cursor;
 
     Spiral.Field = Backbone.Model.extend({
         defaults: {
@@ -261,7 +133,7 @@ $(function(){
     }, Backbone.Events);
 
     Spiral.CurrentMode = _.extend({
-        m: Spiral.Modes.NODE,
+        m: Spiral.Modes.LIST,
         set: function(m){
             this.m = m;
             this.trigger('change');
@@ -378,14 +250,14 @@ $(function(){
         initialize: function() {
             var keymap = {};
 
-            var node_keys = {};
+            var list_keys = {};
 
-            node_keys[Spiral.Keys.KEY_N] = this.addNode;
-            node_keys[Spiral.Keys.KEY_J] = this.cursorDown;
-            node_keys[Spiral.Keys.KEY_K] = this.cursorUp;
-            node_keys[Spiral.Keys.KEY_E] = this.editNode;
+            list_keys[Spiral.Keys.KEY_N] = this.addNode;
+            list_keys[Spiral.Keys.KEY_J] = this.nextNode;
+            list_keys[Spiral.Keys.KEY_K] = this.previousNode;
+            list_keys[Spiral.Keys.KEY_E] = this.editNode;
 
-            keymap[Spiral.Modes.NODE] = node_keys;
+            keymap[Spiral.Modes.LIST] = list_keys;
 
             var field_keys = {};
 
@@ -405,19 +277,12 @@ $(function(){
             });
         },
         addNode: function() {
-            var type = Spiral.CurrentConcept.getRootType();
-            var node = new Spiral.Node({
-                type: type
-            });
-            Spiral.AllNodes.push(node);
-
-            Spiral.TheCursor.setCurrentNode(node);
-            Spiral.AllNodes.trigger('added');
+            Spiral.TheCursor.addNode();
         },
-        cursorDown: function() {
+        nextNode: function() {
             Spiral.TheCursor.nextNode();
         },
-        cursorUp: function() {
+        previousNode: function() {
             Spiral.TheCursor.previousNode();
         },
         editNode: function() {
@@ -465,6 +330,10 @@ $(function(){
     
     Spiral.AllConcepts.bind('reset', function(){
         Spiral.CurrentConcept.set(Spiral.AllConcepts.first());
+
+        Spiral.TheCursor.set({
+            current_list_type: Spiral.CurrentConcept.getRootType()
+        });
     });
 
     Spiral.AllConcepts.fetch();
@@ -473,5 +342,9 @@ $(function(){
     new Spiral.Editor;
     new Spiral.NodeListView;
     new Spiral.ModeDisplayView;
+
+    Spiral.TheCursor.set({
+        current_list: Spiral.AllNodes
+    });
     window.Spiral = Spiral;
 });
