@@ -20,7 +20,7 @@
     </body>
 
     <script type="text/html" id="node-tmpl">
-        Type Name: <%= type.get('name') %>
+        <%= type.get('name') %>
         <ul class="fields">
         </ul>
     </script>
@@ -29,8 +29,8 @@
         <%= field_name %>: <div class="type-input-container"></div>
     </script>
 
-    <script type="text/html" id="type-input-tmpl">
-        <input class="type-input-box" />
+    <script type="text/html" id="literal-input-tmpl">
+        <input class="type-input-box" value="<%= value %>"/>
     </script>
 </html>
 

@@ -71,7 +71,7 @@ $(function(){
         getInputType: function() {
             if(this.get('literals')) {
                 return Spiral.FieldTypes.LITERAL;
-            } else if(this.get('fields')) {
+            } else if(this.get('fields').length > 0) {
                 return Spiral.FieldTypes.MULTI;
             } else if(this.get('type_alias')) {
                 return Spiral.FieldTypes.ALIAS;
@@ -217,6 +217,9 @@ $(function(){
     Spiral.TheCursor = new Spiral.Cursor;
 
     Spiral.Field = Backbone.Model.extend({
+        defaults: {
+            value: null
+        },
         getType: function() {
             var type_name = this.get("field_type");
             return Spiral.CurrentConcept.getTypeByName(type_name);
@@ -281,10 +284,10 @@ $(function(){
         postRender: function() {
             this.toggleSelected();
 
-            var type_name = this.model.get('field_type');
             var field_type = this.model.getType();
+            var input_type = field_type.getInputType();
 
-            var v = new Spiral.TypeInputView({model:field_type});
+            var v = Spiral.TypeInputView.fromInputType(input_type, this.model);
             this.$(".type-input-container").html(v.render().el);
 
             if(this.model.get('selected')) {
@@ -298,7 +301,9 @@ $(function(){
     Spiral.TypeInputView = Spiral.MView.extend({
         tagName: "div",
         className: "type-input",
-        template: _.template($('#type-input-tmpl').html()),
+        focus: $.noop,
+        blur: $.noop,
+        template: _.template($('#literal-input-tmpl').html()),
         events: {
             'keydown .type-input-box': 'recordValue'
         },
@@ -308,20 +313,48 @@ $(function(){
         blur: function() {
             this.$el.find('.type-input-box').blur();
         },
-        postRender: function() {
-            var input_type = this.model.getInputType();
-            this.$el.addClass(input_type);
-
-            if(input_type == Spiral.FieldTypes.LITERAL) {
-                this.$el.find('.type-input-box').typeahead({
-                    source: this.model.get("literals")
-                });
-            }
-        },
         recordValue: function() {
             var val = this.$el.find('.type-input-box').val();
+            this.model.set({value: val}, {silent: true});
         }
     });
+
+    Spiral.ListInputView = Spiral.TypeInputView.extend({
+    
+    });
+    Spiral.MultiInputView = Spiral.TypeInputView.extend({});
+    Spiral.PrimitiveInputView = Spiral.TypeInputView.extend({
+        postRender: function() {
+            this.$el.addClass("primtive");
+        }
+    });
+
+    Spiral.AliasInputView = Spiral.TypeInputView.extend({
+    
+    });
+
+    Spiral.LiteralInputView = Spiral.TypeInputView.extend({
+        postRender: function() {
+            var field_type = this.model.getType();
+
+            this.$el.find('.type-input-box').typeahead({
+                source: field_type.get("literals")
+            });
+        }
+    });
+
+    Spiral.TypeInputView.fromInputType = function(input_type, field) {
+        var input_type_to_view = {};
+
+        input_type_to_view[Spiral.FieldTypes.LITERAL] = Spiral.LiteralInputView;
+        input_type_to_view[Spiral.FieldTypes.LIST] = Spiral.ListInputView;
+        input_type_to_view[Spiral.FieldTypes.MULTI] = Spiral.MultiInputView;
+        input_type_to_view[Spiral.FieldTypes.ALIAS] = Spiral.AliasInputView;
+        input_type_to_view[Spiral.FieldTypes.PRIMITIVE] = Spiral.PrimitiveInputView;
+
+        return new input_type_to_view[input_type]({model: field});
+
+    };
 
     Spiral.NodeView = Spiral.MView.extend({
         tagName: "div",
