@@ -1,15 +1,25 @@
 (function(){
     var Spiral = window.Spiral || {};
+    
+    _.extend(Backbone.Model.prototype, {
+        update: function(field, xform) {
+            var f = this.get(field);
+            var new_f = xform(f);
+            var xformed = {};
+            xformed[field] = new_f;
+            this.set(xformed);
+        }
+    })
 
     Spiral.Cursor = Backbone.Model.extend({
         defaults: {
-            'current_node': null,
+            'current_nodes': {},
             'current_field': null,
             'current_list_type': null,
-            'current_list': null
+            'current_list': null,
+            'list_stack': []
         },
         addNode: function() {
-          console.log("ad");
             var type = this.get('current_list_type');
             var list = this.get('current_list');
 
@@ -27,7 +37,12 @@
                 old.set({selected: false});
             }
             node.set({selected: true});
-            this.set({current_node: node});
+
+            var current_list = this.getCurrentList();
+            this.update('current_nodes', function(current_nodes){
+                current_nodes[current_list.cid] = node;
+                return current_nodes;
+            });
         },
         setCurrentField: function (field) {
             var old = this.getCurrentField();
@@ -40,7 +55,9 @@
             this.set({current_field: field});
         },
         getCurrentNode: function() {
-            return this.get("current_node");
+            var current_list = this.getCurrentList();
+            var nodes = this.get("current_nodes");
+            return nodes[current_list.cid];
         },
         getCurrentField: function() {
             return this.get("current_field");
@@ -142,6 +159,21 @@
                 var new_field = fields[new_index];
                 this.setCurrentField(new_field);
             }
+        },
+        pushCurrentList: function(list, type) {
+            this.update('list_stack', function(l){
+                l.push({
+                  list: list,
+                  type: type
+                });
+                
+                return l;
+            });
+
+            this.set({
+                current_list: list,
+                current_list_type: type
+            });
         },
         getCurrentList: function() {
             return this.get("current_list");

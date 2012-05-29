@@ -205,10 +205,9 @@ $(function(){
             var type = this.model.getType();
             var list_type = Spiral.CurrentConcept.getTypeByName(type.get('list_of'));
 
-            Spiral.TheCursor.set({
-                current_list: this.model.get('children'),
-                current_list_type: list_type
-            });
+            var list = this.model.get('children');
+            Spiral.TheCursor.pushCurrentList(list, list_type);
+
             Spiral.CurrentMode.set(Spiral.Modes.LIST);
         },
         postRender: function() {
@@ -362,9 +361,10 @@ $(function(){
     Spiral.AllConcepts.bind('reset', function(){
         Spiral.CurrentConcept.set(Spiral.AllConcepts.first());
 
-        Spiral.TheCursor.set({
-            current_list_type: Spiral.CurrentConcept.getRootType()
-        });
+        var list = Spiral.AllNodes;
+        var type = Spiral.CurrentConcept.getRootType();
+
+        Spiral.TheCursor.pushCurrentList(list, type);
     });
 
     Spiral.AllConcepts.fetch();
@@ -373,8 +373,5 @@ $(function(){
     new Spiral.Editor;
     new Spiral.ModeDisplayView;
 
-    Spiral.TheCursor.set({
-        current_list: Spiral.AllNodes
-    });
     window.Spiral = Spiral;
 });
