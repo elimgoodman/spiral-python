@@ -89,6 +89,11 @@ $(function(){
     Spiral.Node = Backbone.Model.extend({});
 
     Spiral.Field = Backbone.Model.extend({
+        initialize: function() {
+            this.set({
+                children: new Spiral.NodeList()
+            });
+        },
         defaults: {
             value: null
         },
@@ -174,7 +179,10 @@ $(function(){
         tagName: "div",
         className: "type-input",
         focus: $.noop,
-        blur: $.noop,
+        blur: $.noop
+    });
+    
+    Spiral.FreeformInputView = Spiral.TypeInputView.extend({
         template: _.template($('#literal-input-tmpl').html()),
         events: {
             'keydown .type-input-box': 'recordValue'
@@ -192,10 +200,33 @@ $(function(){
     });
 
     Spiral.ListInputView = Spiral.TypeInputView.extend({
-    
+        template: _.template($('#list-input-tmpl').html()),
+        focus: function() {
+            var type = this.model.getType();
+            var list_type = Spiral.CurrentConcept.getTypeByName(type.get('list_of'));
+
+            Spiral.TheCursor.set({
+                current_list: this.model.get('children'),
+                current_list_type: list_type
+            });
+            Spiral.CurrentMode.set(Spiral.Modes.LIST);
+        },
+        postRender: function() {
+            var children_list = this.$('.children');
+            var children = this.model.get('children');
+            children.each(function(c){
+                children_list.append("<li>foo</li>");
+                //var v = new Spiral.NodeView({model: c});
+                //console.log(v.render().el);
+                //children_list.append(v.render().el);
+            });
+        },
+        blur: function() {
+            //Spiral.CurrentMode.set(Spiral.Modes.FIELD);
+        }
     });
     Spiral.MultiInputView = Spiral.TypeInputView.extend({});
-    Spiral.PrimitiveInputView = Spiral.TypeInputView.extend({
+    Spiral.PrimitiveInputView = Spiral.FreeformInputView.extend({
         postRender: function() {
             this.$el.addClass("primtive");
         }
@@ -205,7 +236,7 @@ $(function(){
     
     });
 
-    Spiral.LiteralInputView = Spiral.TypeInputView.extend({
+    Spiral.LiteralInputView = Spiral.FreeformInputView.extend({
         postRender: function() {
             var field_type = this.model.getType();
 
@@ -267,7 +298,7 @@ $(function(){
 
             keymap[Spiral.Modes.FIELD] = field_keys;
 
-            $('body').keyup(function(e){
+            $('body').keydown(function(e){
                 var mode = Spiral.CurrentMode.get();
                 var method = keymap[mode][e.which];
                 if(method) {
@@ -290,7 +321,7 @@ $(function(){
             Spiral.TheCursor.editCurrentNode();
         },
         exitFieldMode: function() {
-            Spiral.CurrentMode.set(Spiral.Modes.NODE);
+            Spiral.CurrentMode.set(Spiral.Modes.LIST);
             Spiral.TheCursor.stopEditingCurrentNode();
         },
         nextField: function() {
@@ -338,9 +369,8 @@ $(function(){
 
     Spiral.AllConcepts.fetch();
     Spiral.Primitives.fetch();
-
-    new Spiral.Editor;
     new Spiral.NodeListView;
+    new Spiral.Editor;
     new Spiral.ModeDisplayView;
 
     Spiral.TheCursor.set({

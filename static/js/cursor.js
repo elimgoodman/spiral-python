@@ -9,6 +9,7 @@
             'current_list': null
         },
         addNode: function() {
+          console.log("ad");
             var type = this.get('current_list_type');
             var list = this.get('current_list');
 
@@ -138,7 +139,8 @@
             var new_index = index_xform(current_index, fields.length);
 
             if(new_index != null) {
-                this.setCurrentField(fields[new_index]);
+                var new_field = fields[new_index];
+                this.setCurrentField(new_field);
             }
         },
         getCurrentList: function() {
